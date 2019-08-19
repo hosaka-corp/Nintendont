@@ -82,38 +82,46 @@ void ReadSpeed_Setup(u32 Offset, int Length)
 		return;
 
 	u32 CurrentBlock = ALIGN_BACKWARD(Offset, READ_BLOCK);
-	if(CurrentBlock < CMDBaseBlock || //always seek and read
-		((Offset+Length) - CMDBaseBlock) > CACHE_SIZE)
-	{
-		CMDTicks = (Length / READ_TICKS) + SEEK_TICKS;
-		//dbgprintf("Reading uncached, %u ticks\r\n", CMDTicks);
-		CMDBaseBlock = ALIGN_BACKWARD(Offset+Length, READ_BLOCK);
-		return;
-	}
-	CMDTicks = 0; //start from fresh
+	CMDTicks = (Length / READ_TICKS) + SEEK_TICKS;
+	CMDBaseBlock = ALIGN_BACKWARD(Offset+Length, READ_BLOCK);
+	dbgprintf("ReadSpeed_Setup returned %08x ticks\n", CMDTicks);
+	return;
 
-	u32 lenCached = MIN(TimerDiffTicks(CMDLastFinish) * READ_TICKS, CACHE_SIZE);
-	u32 CachedUpToOffset = CMDBaseBlock + READ_BLOCK + lenCached;
-
-	if(CachedUpToOffset > CurrentBlock)
-	{
-		int CacheUsableLen = CachedUpToOffset - CurrentBlock;
-		int CacheLen = MIN(Length, CacheUsableLen);
-		if(CacheLen > 0)
-		{
-			CMDTicks += CacheLen / CACHE_TICKS; //whats cached
-			Length -= CacheLen; //whats left to read
-		}
-		//dbgprintf("%i %i %u\r\n", CacheUsableLen, Length, CMDTicks);
-	}
-	if(Length > 0)
-		CMDTicks += Length / READ_TICKS;
-
-	//dbgprintf("Reading possibly cached, %u ticks\r\n", CMDTicks);
-	if((CurrentBlock - CMDBaseBlock) > READ_BLOCK)
-	{	//if more than a block apart
-		CMDBaseBlock = ALIGN_BACKWARD(Offset+Length, READ_BLOCK);
-	}
+//	u32 CurrentBlock = ALIGN_BACKWARD(Offset, READ_BLOCK);
+//	if(CurrentBlock < CMDBaseBlock || //always seek and read
+//		((Offset+Length) - CMDBaseBlock) > CACHE_SIZE)
+//	{
+//		CMDTicks = (Length / READ_TICKS) + SEEK_TICKS;
+//		//dbgprintf("Reading uncached, %u ticks\r\n", CMDTicks);
+//		CMDBaseBlock = ALIGN_BACKWARD(Offset+Length, READ_BLOCK);
+//		dbgprintf("ReadSpeed_Setup returned %08x ticks\n", CMDTicks);
+//		return;
+//	}
+//	CMDTicks = 0; //start from fresh
+//
+//	u32 lenCached = MIN(TimerDiffTicks(CMDLastFinish) * READ_TICKS, CACHE_SIZE);
+//	u32 CachedUpToOffset = CMDBaseBlock + READ_BLOCK + lenCached;
+//
+//	if(CachedUpToOffset > CurrentBlock)
+//	{
+//		int CacheUsableLen = CachedUpToOffset - CurrentBlock;
+//		int CacheLen = MIN(Length, CacheUsableLen);
+//		if(CacheLen > 0)
+//		{
+//			CMDTicks += CacheLen / CACHE_TICKS; //whats cached
+//			Length -= CacheLen; //whats left to read
+//		}
+//		//dbgprintf("%i %i %u\r\n", CacheUsableLen, Length, CMDTicks);
+//	}
+//	if(Length > 0)
+//		CMDTicks += Length / READ_TICKS;
+//
+//	//dbgprintf("Reading possibly cached, %u ticks\r\n", CMDTicks);
+//	if((CurrentBlock - CMDBaseBlock) > READ_BLOCK)
+//	{	//if more than a block apart
+//		CMDBaseBlock = ALIGN_BACKWARD(Offset+Length, READ_BLOCK);
+//	}
+//	dbgprintf("ReadSpeed_Setup returned %08x ticks\n", CMDTicks);
 }
 
 u32 ReadSpeed_End()
@@ -126,6 +134,7 @@ u32 ReadSpeed_End()
 		if(TimerDiffTicks(CMDStartTime) < CMDTicks)
 			return 0;
 		//dbgprintf("Read took %u ticks\r\n", TimerDiffTicks(CMDStartTime));
+		dbgprintf("Read took %d us\r\n", TicksToUs(TimerDiffTicks(CMDStartTime)));
 		CMDTicks = UINT_MAX;
 		if(CMDLastBlock != CMDBaseBlock) //new caching
 		{

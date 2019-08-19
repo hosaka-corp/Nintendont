@@ -1678,7 +1678,7 @@ void DoPatches( char *Buffer, u32 Length, u32 DiscOffset )
 		cheatsWanted = 1;
 	if(!IsWiiU() && ConfigGetConfig(NIN_CFG_DEBUGGER))
 		debuggerWanted = 1;
-	if(cheatsWanted || debuggerWanted || MeleeVersion)
+	if(cheatsWanted || debuggerWanted);
 		PatchCount &= ~FPATCH_OSSleepThread;
 	/* So this can be used but for now we just use PADRead */
 	/*if( (IsWiiU() && ConfigGetConfig(NIN_CFG_CHEATS)) ||
@@ -2535,7 +2535,7 @@ void DoPatches( char *Buffer, u32 Length, u32 DiscOffset )
 						case FCODE_OSExceptionInit:
 						case FCODE_OSExceptionInit_DBG:
 						{
-							if(cheatsWanted || debuggerWanted || MeleeVersion)
+							if(cheatsWanted || debuggerWanted)
 							{
 								u32 patchOffset = (CurPatterns[j].PatchLength == FCODE_OSExceptionInit ? 0x1D4 : 0x1F0);
 								printpatchfound(CurPatterns[j].Name, CurPatterns[j].Type, FOffset + patchOffset);
@@ -3274,7 +3274,7 @@ void DoPatches( char *Buffer, u32 Length, u32 DiscOffset )
 	 *	    we don't need to support this, but I *think* it should work with these changes.
 	 */
 
-	bool use_codehandler = (cheatsWanted || debuggerWanted || MeleeVersion);
+	bool use_codehandler = (cheatsWanted || debuggerWanted);
 
 	u32 gct_cursor;
 	u32 max_gct_size;
@@ -3380,98 +3380,6 @@ void DoPatches( char *Buffer, u32 Length, u32 DiscOffset )
 		}
 		else { dbgprintf("Patch:Failed to open/find GCT:\"%s\"\r\n", cheatPath ); }
 	}
-
-
-	/* When booting Melee, deal with Slippi patches and Gecko codes toggled by users.
-	 *
-	 *	(a) If we copied a GCT, move our cursor onto the footer.
-	 *	    Otherwise, build a GCT header in RAM before copying codes.
-	 *	(b) Copy over Slippi core patches
-	 *	(c) Apply any user-toggleable Gecko codes
-	 */
-
-	if (MeleeVersion)
-	{
-		if (copied_gct)
-		{
-			gct_cursor += gct_len - 8;
-		}
-		else
-		{
-			memcpy((void*)gct_cursor, GCT_HEADER, sizeof(GCT_HEADER));
-			sync_after_write((void*)gct_cursor, sizeof(GCT_HEADER));
-			gct_cursor += sizeof(GCT_HEADER);
-		}
-		dbgprintf("Patch:Apply Slippi core at 0x%08x\r\n", gct_cursor);
-
-		// Always apply core Slippi patches when running Melee
-		memcpy((void*)gct_cursor, g_core, g_core_size);
-		sync_after_write((void*)gct_cursor, g_core_size);
-		gct_cursor += g_core_size;
-
-		dbgprintf("Patch:Apply toggleables at 0x%08x\r\n", gct_cursor);
-
-		// Optionally apply user-toggleable patches
-		if (ConfigGetConfig(NIN_CFG_MELEE_PAL))
-		{
-			memcpy((void*)gct_cursor, g_pal, g_pal_size);
-			sync_after_write((void*)gct_cursor, g_pal_size);
-			gct_cursor += g_pal_size;
-		}
-		if (ConfigGetConfig(NIN_CFG_MELEE_QOL))
-		{
-			memcpy((void*)gct_cursor, g_qol, g_qol_size);
-			sync_after_write((void*)gct_cursor, g_qol_size);
-			gct_cursor += g_qol_size;
-		}
-		if (ConfigGetConfig(NIN_CFG_MELEE_TOURNAMENT))
-		{
-			memcpy((void*)gct_cursor, g_tournament, g_tournament_size);
-			sync_after_write((void*)gct_cursor, g_tournament_size);
-			gct_cursor += g_tournament_size;
-		}
-		if (ConfigGetConfig(NIN_CFG_MELEE_FROZEN))
-		{
-			memcpy((void*)gct_cursor, g_frozen, g_frozen_size);
-			sync_after_write((void*)gct_cursor, g_frozen_size);
-			gct_cursor += g_frozen_size;
-		}
-
-		dbgprintf("Patch:Apply controller fix at 0x%08x\r\n", gct_cursor);
-
-		// Optionally apply user-toggleable controller-fix
-		u32 melee_controllerfix = ConfigGetMeleeControllerFix();
-		u32 controller_patch_len = 0;
-		const unsigned char *controller_patch = 0;
-		switch (melee_controllerfix)
-		{
-			case NIN_CFG_MELEE_CONTROLLER_UCF:
-				controller_patch	= g_ucf;
-				controller_patch_len	= g_ucf_size;
-				break;
-			case NIN_CFG_MELEE_CONTROLLER_IGTOGGLE:
-				controller_patch	= g_toggles;
-				controller_patch_len	= g_toggles_size;
-				break;
-			case NIN_CFG_MELEE_CONTROLLER_NOFIX:
-			default:
-				break;
-		}
-		if (controller_patch)
-		{
-			memcpy((void*)gct_cursor, controller_patch, controller_patch_len);
-			sync_after_write((void*)controller_patch, controller_patch_len);
-			gct_cursor += controller_patch_len;
-		}
-
-		dbgprintf("Patch:Apply GCT footer 0x%08x\r\n", gct_cursor);
-
-		// Apply GCT footer
-		memcpy((void*)gct_cursor, GCT_FOOTER, sizeof(GCT_FOOTER));
-		sync_after_write((void*)gct_cursor, sizeof(GCT_FOOTER));
-		gct_cursor += sizeof(GCT_FOOTER);
-	}
-
 
 	free(hash);
 	free(SHA1i);

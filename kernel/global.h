@@ -315,6 +315,9 @@ static inline u32 TicksToMs(u32 time)
 	return time * 0.0005267;
 }
 
+static inline u32 TicksToUs(u32 time) { return time * 0.5267; }
+
+
 static inline u32 TimerDiffTicks(u32 time)
 {
 	u32 curtime = read32(HW_TIMER);

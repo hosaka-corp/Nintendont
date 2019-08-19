@@ -39,17 +39,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "HID.h"
 #include "BT.h"
 #include "usbstorage.h"
-// #include "Slippi.h"
 
 #include "ff_utf8.h"
 static u8 DummyBuffer[0x1000] __attribute__((aligned(32)));
 extern u32 s_cnt;
 
-#ifndef DEBUG_DI
-#define dbgprintf(...)
-#else
+//#ifndef DEBUG_DI
+//#define dbgprintf(...)
+//#else
 extern int dbgprintf( const char *fmt, ...);
-#endif
+//#endif
 
 struct ipcmessage DI_CallbackMsg;
 u32 DI_MessageQueue = 0xFFFFFFFF;
