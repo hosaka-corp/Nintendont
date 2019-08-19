@@ -943,14 +943,14 @@ int main(int argc, char **argv)
 
 		// Write config to the boot device, which is loaded on next launch.
 		FIL cfg;
-		if (f_open_char(&cfg, "/slippi_nincfg.bin", FA_WRITE|FA_OPEN_ALWAYS) == FR_OK)
+		if (f_open_char(&cfg, "/tas_nincfg.bin", FA_WRITE|FA_OPEN_ALWAYS) == FR_OK)
 		{
 			// Reserve space in the file.
 			if (f_size(&cfg) < sizeof(NIN_CFG)) {
 				f_expand(&cfg, sizeof(NIN_CFG), 1);
 			}
 
-			// Write slippi_nincfg.bin
+			// Write tas_nincfg.bin
 			UINT wrote;
 			f_write(&cfg, ncfg, sizeof(NIN_CFG), &wrote);
 			f_close(&cfg);
@@ -958,7 +958,7 @@ int main(int argc, char **argv)
 
 		// Write config to the game device, used by the Nintendont kernel.
 		char ConfigPath[35];
-		snprintf(ConfigPath, sizeof(ConfigPath), "%s:/slippi_nincfg.bin", GetRootDevice());
+		snprintf(ConfigPath, sizeof(ConfigPath), "%s:/tas_nincfg.bin", GetRootDevice());
 		if (f_open_char(&cfg, ConfigPath, FA_WRITE|FA_OPEN_ALWAYS) == FR_OK)
 		{
 			// Reserve space in the file.
@@ -966,7 +966,7 @@ int main(int argc, char **argv)
 				f_expand(&cfg, sizeof(NIN_CFG), 1);
 			}
 
-			// Write slippi_nincfg.bin
+			// Write tas_nincfg.bin
 			UINT wrote;
 			f_write(&cfg, ncfg, sizeof(NIN_CFG), &wrote);
 			f_close(&cfg);
