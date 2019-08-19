@@ -467,56 +467,68 @@ void ISOSeek(u32 Offset)
 	}
 }
 
+
+// Disable cached disc reads - read through to storage media
 const u8 *ISORead(u32* Length, u32 Offset)
 {
-	if(CacheInited == 0)
-	{
-		if (*Length > DI_READ_BUFFER_LENGTH)
-			*Length = DI_READ_BUFFER_LENGTH;
-		ISOReadDirect(DI_READ_BUFFER, *Length, Offset);
-		return DI_READ_BUFFER;
-	}
-	u32 i;
+	// Cap reads at DI_READ_BUFFER_LENGTH
+	if (*Length > DI_READ_BUFFER_LENGTH)
+		*Length = DI_READ_BUFFER_LENGTH;
 
-	for( i = 0; i < CACHE_MAX; ++i )
-	{
-		if(DC[i].Size == 0) continue;
-		if( Offset >= DC[i].Offset && Offset + *Length <= DC[i].Offset + DC[i].Size )
-		{
-			//dbgprintf("DI: Cached Read Offset:%08X Size:%08X Buffer:%p\r\n", DC[i].Offset, DC[i].Size, DC[i].Data );
-			return DC[i].Data + (Offset - DC[i].Offset);
-		}
-	}
-
-	u64 Offset64 = Offset + ISOShift64;
-	if( (Offset64 == LastOffset64) && (*Length < 0x8000) )
-	{	//pre-load data, guessing
-		u32 OriLength = *Length;
-		while((*Length += OriLength) < 0x10000) ;
-	}
-
-	// case we ran out of positions
-	if( TempCacheCount >= CACHE_MAX )
-		TempCacheCount = 0;
-
-	// case we filled up the cache
-	if( (DataCacheOffset + *Length) >= DCacheLimit )
-	{
-		for( i = 0; i < CACHE_MAX; ++i )
-			DC[i].Size = 0; //quickly delete old cache content
-		DataCacheOffset = 0;
-		TempCacheCount = 0;
-	}
-
-	u32 pos = TempCacheCount;
-	TempCacheCount++;
-
-	DC[pos].Data = DCCache + DataCacheOffset;
-	DC[pos].Offset = Offset;
-	DC[pos].Size = *Length;
-
-	ISOReadDirect(DC[pos].Data, *Length, Offset64);
-
-	DataCacheOffset += *Length;
-	return DC[pos].Data;
+	ISOReadDirect(DI_READ_BUFFER, *Length, Offset);
+	return DI_READ_BUFFER;
 }
+
+//const u8 *ISORead(u32* Length, u32 Offset)
+//{
+//	if(CacheInited == 0)
+//	{
+//		if (*Length > DI_READ_BUFFER_LENGTH)
+//			*Length = DI_READ_BUFFER_LENGTH;
+//		ISOReadDirect(DI_READ_BUFFER, *Length, Offset);
+//		return DI_READ_BUFFER;
+//	}
+//	u32 i;
+//
+//	for( i = 0; i < CACHE_MAX; ++i )
+//	{
+//		if(DC[i].Size == 0) continue;
+//		if( Offset >= DC[i].Offset && Offset + *Length <= DC[i].Offset + DC[i].Size )
+//		{
+//			//dbgprintf("DI: Cached Read Offset:%08X Size:%08X Buffer:%p\r\n", DC[i].Offset, DC[i].Size, DC[i].Data );
+//			return DC[i].Data + (Offset - DC[i].Offset);
+//		}
+//	}
+//
+//	u64 Offset64 = Offset + ISOShift64;
+//	if( (Offset64 == LastOffset64) && (*Length < 0x8000) )
+//	{	//pre-load data, guessing
+//		u32 OriLength = *Length;
+//		while((*Length += OriLength) < 0x10000) ;
+//	}
+//
+//	// case we ran out of positions
+//	if( TempCacheCount >= CACHE_MAX )
+//		TempCacheCount = 0;
+//
+//	// case we filled up the cache
+//	if( (DataCacheOffset + *Length) >= DCacheLimit )
+//	{
+//		for( i = 0; i < CACHE_MAX; ++i )
+//			DC[i].Size = 0; //quickly delete old cache content
+//		DataCacheOffset = 0;
+//		TempCacheCount = 0;
+//	}
+//
+//	u32 pos = TempCacheCount;
+//	TempCacheCount++;
+//
+//	DC[pos].Data = DCCache + DataCacheOffset;
+//	DC[pos].Offset = Offset;
+//	DC[pos].Size = *Length;
+//
+//	ISOReadDirect(DC[pos].Data, *Length, Offset64);
+//
+//	DataCacheOffset += *Length;
+//	return DC[pos].Data;
+//}
