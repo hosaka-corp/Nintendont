@@ -524,7 +524,7 @@ typedef struct _MenuCtx
 	u32 menuMode;		// Menu mode. (0 == games; 1 == settings)
 	bool redraw;		// If true, redraw is required.
 	bool selected;		// If true, the user selected a game.
-	bool saveSettings;	// If true, save settings to nincfg.bin.
+	bool saveSettings;	// If true, save settings to tasbot_nincfg.bin.
 
 	// Counters for key repeat.
 	struct {
