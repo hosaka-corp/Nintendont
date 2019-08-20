@@ -134,7 +134,7 @@ u32 ReadSpeed_End()
 		if(TimerDiffTicks(CMDStartTime) < CMDTicks)
 			return 0;
 		//dbgprintf("Read took %u ticks\r\n", TimerDiffTicks(CMDStartTime));
-		dbgprintf("Read took %d us\r\n", TicksToUs(TimerDiffTicks(CMDStartTime)));
+		dbgprintf("Read took %d us\n", TicksToUs(TimerDiffTicks(CMDStartTime)));
 		CMDTicks = UINT_MAX;
 		if(CMDLastBlock != CMDBaseBlock) //new caching
 		{

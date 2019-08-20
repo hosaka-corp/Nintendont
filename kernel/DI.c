@@ -748,7 +748,7 @@ void DIUpdateRegisters( void )
 					useipltri = 0; //happens after the "setup", read actual disc
 				}
 
-				dbgprintf( "DIP:DVDReadA8( 0x%08x, 0x%08x, 0x%08x )\r\n", Offset, Length, Buffer|0x80000000 );
+				dbgprintf( "DIP:DVDReadA8( %08x, %08x, %08x )\n", Offset, Length, Buffer|0x80000000 );
 
 				if( TRIGame && Offset >= 0x1F000000 )
 				{
@@ -761,7 +761,7 @@ void DIUpdateRegisters( void )
 					if( Offset >= 0x57058000 )
 					{
 						dbgprintf("Unhandled Read\n");
-						dbgprintf("DIP:DVDRead%02X( 0x%08x, 0x%08x, 0x%08x )\n", DIcommand, Offset, Length, Buffer|0x80000000 );
+						dbgprintf("DIP:DVDRead%02X( %08x, %08x, %08x )\n", DIcommand, Offset, Length, Buffer|0x80000000 );
 						Shutdown();
 					}
 					if( Buffer < 0x01800000 )
@@ -783,7 +783,7 @@ void DIUpdateRegisters( void )
 				u32 Length	= read32(DI_CMD_2);
 				u32 Offset	= read32(DI_CMD_1) << 2;
 
-				dbgprintf( "DIP:DVDReadF8( 0x%08x, 0x%08x, 0x%08x )\r\n", Offset, Length, Buffer|0x80000000 );
+				dbgprintf( "DIP:DVDReadF8( 0x%08x, 0x%08x, 0x%08x )\n", Offset, Length, Buffer|0x80000000 );
 
 				if( Buffer < 0x01800000 )
 				{
