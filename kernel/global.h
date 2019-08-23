@@ -318,6 +318,9 @@ static inline u32 TimerDiffSeconds(u32 time)
 	return TicksToSecs(curtime - time);
 }
 
+static inline u32 TicksToUs(u32 time) { return time * 0.5267; }
+
+
 static inline u32 IsGCGame(u32 Buffer)
 {
 	u32 AMB1 = read32(Buffer+0x4);

@@ -42,6 +42,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "SDI.h"
 #include "ff_utf8.h"
 
+#include "ReadSpeed.h"
+
 //#define USE_OSREPORTDM 1
 
 //#undef DEBUG
@@ -359,12 +361,23 @@ int _main( int argc, char *argv[] )
 				PADTimer = read32(HW_TIMER);
 			}
 		}
+
+
+		// If we're in the middle of servicing a DI IRQ, periodically check to
+		// see if DIReadThread has ACKed the IOCTL and completed the work
 		if(DI_IRQ == true)
 		{
+			// If DIReadThread is done with the work, try to clear the interrupt.
+			// Otherwise, do some work for approximately "the atomic period."
+			//
+			// If DIInterrupt() sees that we are at least "an atomic period"
+			// away from the ReadSpeed model's target time, it will simply block
+			// until it's time to complete the read.
+
 			if(DiscCheckAsync())
 				DIInterrupt();
 			else
-				udelay(200); //let the driver load data
+				udelay(DI_IRQ_ATOMIC_PERIOD_US);
 		}
 		else if(SaveCard == true) /* DI IRQ indicates we might read async, so dont write at the same time */
 		{
@@ -429,14 +442,18 @@ int _main( int argc, char *argv[] )
 			}
 		}
 		_ahbMemFlush(1);
+
+		// Check to see if there are any outstanding disc requests.
+		// If so, dispatch an IOCTL to DIReadThread and set DI_IRQ
 		DIUpdateRegisters();
-		#ifdef PATCHALL
+
+#ifdef PATCHALL
 		EXIUpdateRegistersNEW();
 		GCAMUpdateRegisters();
 		BTUpdateRegisters();
 		HIDUpdateRegisters(0);
 		if(DisableSIPatch == 0) SIUpdateRegisters();
-		#endif
+#endif
 		StreamUpdateRegisters();
 		CheckOSReport();
 		if(GCNCard_CheckChanges())
