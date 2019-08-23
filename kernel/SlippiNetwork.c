@@ -29,7 +29,7 @@
 #define READ_BUF_SIZE	MAX_TX_SIZE - 500
 #define CLIENT_MSG_BUF_SIZE 1024
 
-#define THREAD_CYCLE_TIME_MS	1	// Thread loop interval (ms)
+#define THREAD_CYCLE_TIME_MS	10	// Thread loop interval (ms)
 #define HANDSHAKE_TIMEOUT_MS	5000	// Handshake timeout (ms)
 #define CHECK_ALIVE_S		2	// Interval for HELO packets (s)
 

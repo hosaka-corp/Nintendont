@@ -37,6 +37,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "TRI.h"
 #include "Patch.h"
 
+#include "ReadSpeed.h"
+
 #include "SlippiMemory.h"
 #include "SlippiFileWriter.h"
 #include "SlippiNetwork.h"
@@ -222,13 +224,13 @@ int _main( int argc, char *argv[] )
 	}
 
 	//Verification if we can read from disc
-	if(memcmp(ConfigGetGamePath(), "di", 3) == 0)
-	{
-		if(isWiiVC) //will be inited later
-			wiiVCInternal = true;
-		else //will shutdown on fail
-			RealDI_Init();
-	}
+	//if(memcmp(ConfigGetGamePath(), "di", 3) == 0)
+	//{
+	//	if(isWiiVC) //will be inited later
+	//		wiiVCInternal = true;
+	//	else //will shutdown on fail
+	//		RealDI_Init();
+	//}
 
 /* STORAGE_MOUNT BOOT STAGE
  * Use fatfs to [conditionally] mount any SD/USB storage devices.
@@ -390,8 +392,8 @@ int _main( int argc, char *argv[] )
 
 	// If we are using USB for writting slp files and USB is not the
 	// primary device, initialize the file writer
-	if (SlippiFileWrite == 1)
-		SlippiFileWriterInit();
+	//if (SlippiFileWrite == 1)
+	//	SlippiFileWriterInit();
 
 /* KERNEL_RUNNING BOOT STAGE
  * Signal the loader to start booting a game in PPC-world.
@@ -517,14 +519,26 @@ int _main( int argc, char *argv[] )
 				PADTimer = read32(HW_TIMER);
 			}
 		}
+
+		// If we're in the middle of servicing a DI IRQ, periodically check to
+		// see if DIReadThread has ACKed the IOCTL and completed the work
 		if(DI_IRQ == true)
 		{
-			if(DiscCheckAsync())
+			// If DIReadThread is done with the work, try to clear the interrupt.
+			// Otherwise, do some work for approximately "the atomic period."
+			//
+			// If DIInterrupt() sees that we are at least "an atomic period"
+			// away from the ReadSpeed model's target time, it will simply block
+			// until it's time to complete the read.
+
+			if (DiscCheckAsync()) 
 				DIInterrupt();
-			else
-				udelay(200); //let the driver load data
+			else 
+				udelay(DI_IRQ_ATOMIC_PERIOD_US);
 		}
-		else if(SaveCard == true) /* DI IRQ indicates we might read async, so dont write at the same time */
+		// DI IRQ indicated that we might read asynchronously, so either we
+		// "do some work in DIReadThread" OR "spend time writing to the card"
+		else if(SaveCard == true)
 		{
 			if(TimerDiffSeconds(Now) > 2) /* after 3 second earliest */
 			{
@@ -544,6 +558,7 @@ int _main( int argc, char *argv[] )
 		}
 		else /* No device I/O so make sure this stays updated */
 			GetCurrentTime();
+
 		udelay(20); //wait for other threads
 
 		if( WaitForRealDisc == 1 )
@@ -588,15 +603,23 @@ int _main( int argc, char *argv[] )
 			}
 		}
 		_ahbMemFlush(1);
+
+		// Check to see if there are any outstanding disc requests.
+		// If so, dispatch an IOCTL to DIReadThread and set DI_IRQ
 		DIUpdateRegisters();
-		#ifdef PATCHALL
+
+#ifdef PATCHALL
 		EXIUpdateRegistersNEW();
-		GCAMUpdateRegisters();
-		BTUpdateRegisters();
-		HIDUpdateRegisters(0);
-		if(DisableSIPatch == 0) SIUpdateRegisters();
-		#endif
+
+		// We most likely don't need any of these for our use case
+		//GCAMUpdateRegisters();
+		//BTUpdateRegisters();
+		//HIDUpdateRegisters(0);
+		//if(DisableSIPatch == 0) SIUpdateRegisters();
+
+#endif
 		StreamUpdateRegisters();
+
 		CheckOSReport();
 		if(GCNCard_CheckChanges())
 		{

@@ -304,10 +304,12 @@ bool DIChangeDisc( u32 DiscNumber )
 	return true;
 }
 
+// Returns zero if the interrupt has not yet been serviced 
 void DIInterrupt()
 {
-	if(ReadSpeed_End() == 0)
-		return; //still busy
+	// We're still waiting to reach the model's time
+	if(ReadSpeed_End() == 0) return; 
+
 	sync_before_read( (void*)DI_BASE, 0x40 );
 	/* Update DMA registers when needed */
 	if(read32(DI_CONTROL) & 2)
@@ -349,6 +351,7 @@ void DIInterrupt()
 		}
 	}
 	DI_IRQ = false;
+	return 1;
 }
 
 static void TRIReadMediaBoard( u32 Buffer, u32 Offset, u32 Length )
@@ -413,8 +416,8 @@ static void TRIReadMediaBoard( u32 Buffer, u32 Offset, u32 Length )
 
 void DIUpdateRegisters( void )
 {
-	if( DI_IRQ == true ) //still working
-		return;
+	//still working
+	if( DI_IRQ == true ) return;
 
 	u32 i;
 	u32 DIOK = 0,DIcommand;
@@ -748,7 +751,7 @@ void DIUpdateRegisters( void )
 					useipltri = 0; //happens after the "setup", read actual disc
 				}
 
-				dbgprintf( "DIP:DVDReadA8( %08x, %08x, %08x )\n", Offset, Length, Buffer|0x80000000 );
+				//dbgprintf( "DIP:DVDReadA8( %08x, %08x, %08x )\n", Offset, Length, Buffer|0x80000000 );
 
 				if( TRIGame && Offset >= 0x1F000000 )
 				{
@@ -796,9 +799,9 @@ void DIUpdateRegisters( void )
 			} break;
 			case 0xF9:
 			{
-				#ifdef PATCHALL
-				BTInit();
-				#endif
+				//#ifdef PATCHALL
+				//BTInit();
+				//#endif
 				DIOK = 1;
 			} break;
 		}
